@@ -16,8 +16,8 @@ public class Organization {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // BIGINT, PK (자동 증가)
     private Long id;
 
-    @Column(name = "login_id", nullable = false, unique = true) // 기관 로그인 ID (중복 불가)
-    private String loginId;
+    @Column(name = "org_id", nullable = false, unique = true) // 기관 로그인 ID (중복 불가)
+    private String orgId;
 
     @Column(nullable = false) // 비밀번호
     private String password;
@@ -25,14 +25,14 @@ public class Organization {
     @Column(nullable = false) // 기관명
     private String name;
 
-    @Column(name = "organize_id") // 기관번호 (임의 부여 예정이므로 nullable 허용)
-    private String organizeId;
+    @Column(name = "org_code") // 기관번호 (임의 부여 예정이므로 nullable 허용)
+    private String orgCode;
 
     @Builder
-    public Organization(String loginId, String password, String name, String organizeId) {
-        this.loginId = loginId;
+    public Organization(String orgId, String password, String name, String orgCode) {
+        this.orgId = orgId;
         this.password = password;
         this.name = name;
-        this.organizeId = organizeId;
+        this.orgCode = orgCode;
     }
 }

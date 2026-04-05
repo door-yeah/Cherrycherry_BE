@@ -24,7 +24,7 @@ public class OrganizationController {
     public ResponseEntity<String> signUp(@RequestBody SignUpRequest request) {
         // 1. 리액트에서 보낸 DTO 데이터(상자)를 열어서 Service 부서로 넘겨줌
         Long savedOrgId = organizationService.signUp(
-                request.getLoginId(),
+                request.getOrgId(),
                 request.getPassword(),
                 request.getName()
         );
@@ -41,7 +41,7 @@ public class OrganizationController {
     public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest request) {
 
         // 1. Service 부서로 아이디와 비밀번호를 넘겨서 검증받고, 성공하면 토큰을 받아옵니다.
-        String token = organizationService.login(request.getLoginId(), request.getPassword());
+        String token = organizationService.login(request.getOrgId(), request.getPassword());
 
         // 2. 리액트(프론트엔드)가 쉽게 꺼내 쓸 수 있도록 {"token": "eyJhbGci..."} 형태의 JSON으로 포장합니다.
         Map<String, String> response = new HashMap<>();
