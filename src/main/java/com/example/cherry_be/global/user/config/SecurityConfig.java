@@ -17,7 +17,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/login/**").permitAll() // 소셜 로그인 관련 경로는 모두 허용
+                        .requestMatchers("/auth/**", "/login/**","/error", "/favicon.ico").permitAll() // 소셜 로그인 관련 경로는 모두 허용
                         .anyRequest().authenticated() // 나머지는 인증 필요
                 )
 
@@ -25,11 +25,6 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .permitAll()
                 );
-                /*
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login") // 소셜 로그인도 같은 로그인 페이지 사용
-                );
-                */
 
         return http.build();
     }

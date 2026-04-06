@@ -17,13 +17,12 @@ public class OauthService {
     private final List<SocialOauth> socialOauthList;
     private final HttpServletResponse response;
 
-    public void request(SocialLoginType socialLoginType) {
+    public void authorize(SocialLoginType socialLoginType) {
         SocialOauth socialOauth = this.findSocialOauthByType(socialLoginType);
         String redirectURL = socialOauth.getOauthRedirectURL();
         try {
             response.sendRedirect(redirectURL);
         } catch (IOException e) {
-            // 로깅을 추가하면 디버깅이 더 편합니다.
             e.printStackTrace();
         }
     }
@@ -39,4 +38,4 @@ public class OauthService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("알 수 없는 SocialLoginType 입니다."));
     }
-} // 마지막 중괄호 닫기 확인!
+}
