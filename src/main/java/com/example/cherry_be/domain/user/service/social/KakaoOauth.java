@@ -92,25 +92,24 @@ public class KakaoOauth implements SocialOauth {
         return SocialLoginType.KAKAO;
     }
 
-    // 🔥 여기서부터가 핵심 방어 코드가 적용된 부분입니다!
     public UserDto parseUserInfo(String userInfoJson) throws JsonProcessingException {
         JsonNode jsonNode = objectMapper.readTree(userInfoJson);
 
-        // 1. get() 대신 path()를 사용하여 값이 없어도 NullPointerException이 터지지 않게 방어!
-        JsonNode kakaoAccount = jsonNode.path("kakao_account");
-        JsonNode profile = kakaoAccount.path("profile");
+        // 필수 값으로 설정했으므로, 우회하는 path() 대신 정면 돌파하는 get()을 사용합니다!
+        JsonNode kakaoAccount = jsonNode.get("kakao_account");
+        JsonNode profile = kakaoAccount.get("profile");
 
-        // 2. 안전하게 값 꺼내기 (만약 사용자가 동의를 안 해서 값이 없다면, 소괄호 안의 기본값이 들어갑니다)
-        String email = kakaoAccount.path("email").asText("이메일동의안함@kakao.com");
-        String nickname = profile.path("nickname").asText("이름없음");
+        // "이름없음" 같은 임시방편 글자도 과감하게 지워버립니다.
+        String email = kakaoAccount.get("email").asText();
+        String nickname = profile.get("nickname").asText();
 
-        log.info(">> 카카오 유저 파싱 안전하게 완료! 이름: {}, 이메일: {}", nickname, email);
+        log.info(">> 카카오 유저 파싱 완벽 성공! 이름: {}, 이메일: {}", nickname, email);
 
         return UserDto.builder()
                 .oauthProvider("KAKAO")
                 .oauthEmail(email)
                 .name(nickname)
-                //.cellNum(null) // 카카오는 별도 설정 없으면 전화번호 안 줌
+                //.cellNum(null)
                 .build();
     }
 }
