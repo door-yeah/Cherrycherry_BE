@@ -14,7 +14,9 @@ public enum ErrorCode {
 
     // Organization (기관 관련 에러 예시)
     ORG_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "존재하지 않는 기관입니다."),
-    ORG_ID_DUPLICATE(HttpStatus.CONFLICT, "O002", "이미 사용 중인 기관 ID입니다.");
+    ORG_ID_DUPLICATE(HttpStatus.CONFLICT, "O002", "이미 사용 중인 기관 ID입니다."),
+    // 로그인 오류
+    LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "A001", "아이디 또는 비밀번호가 일치하지 않습니다.");
 
     private final HttpStatus status;
     private final String code;

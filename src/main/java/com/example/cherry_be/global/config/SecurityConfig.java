@@ -56,6 +56,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated() // ✅ '나머지 모든 요청'은 반드시 맨 마지막에 선언
                 );
 
+
         return http.build();
     }
 
