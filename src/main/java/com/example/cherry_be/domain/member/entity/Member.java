@@ -1,0 +1,87 @@
+package com.example.cherry_be.domain.member.entity;
+
+import com.example.cherry_be.domain.organization.entity.Organization;
+import com.example.cherry_be.domain.user.entity.User;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "member_info")
+public class Member {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // 기관(사회복지사) FK - 없을 수도 있어서 Nullable
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "org_id", nullable = true)
+    private Organization organization;
+
+    // 보호자(가족) FK - 없을 수도 있어서 Nullable
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true)
+    private User user;
+
+    // 피보호자 이름
+    @Column(nullable = false)
+    private String name;
+
+    // 나이
+    private Long age;
+
+    // 집 주소
+    private String address;
+
+    // 집이나 핸드폰 번호
+    private Long contact;
+
+    // 라즈베리파이 고유 ID (pi_node_01 같은 값)
+    @Column(name = "device_mac", unique = true)
+    private String deviceMac;
+
+    // 현재 상태 (SAFE, WARNING, DANGER)
+    @Enumerated(EnumType.STRING)
+    private MemberStatus status;
+
+    // ── 최신 센서 상태 ──────────────────────────
+    private Boolean vibrator;     // 진동 센서 정상 여부
+    private Boolean radar;        // 레이더 센서 정상 여부
+    private Boolean thermal;      // 열화상 센서 정상 여부
+
+    @Column(name = "last_updated")
+    private LocalDateTime lastUpdated; // 마지막 Pi 데이터 수신 시각
+
+    @Builder
+    public Member(Organization organization, User user, String name, Long age,
+                      String address, Long contact, String deviceMac) {
+        this.organization = organization;
+        this.user = user;
+        this.name = name;
+        this.age = age;
+        this.address = address;
+        this.contact = contact;
+        this.deviceMac = deviceMac;
+        this.status = MemberStatus.SAFE;   // 등록 시 기본값은 SAFE
+        this.vibrator = true;
+        this.radar = true;
+        this.thermal = true;
+    }
+
+    // 라즈베리파이 데이터 수신 시 상태 업데이트
+    public void updateFromDevice(MemberStatus status,
+                                  Boolean vibrator, Boolean radar, Boolean thermal) {
+        this.status = status;
+        this.vibrator = vibrator;
+        this.radar = radar;
+        this.thermal = thermal;
+        this.lastUpdated = LocalDateTime.now();
+    }
+}

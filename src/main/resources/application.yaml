@@ -42,12 +42,6 @@ spring:
             user-name-attribute: id
 
 
-jwt:
-  secret: ${JWT_SECRET}
-  expiration-time: ${JWT_EXPIRATION_TIME}
-cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS}
-
 
 sns:
   google:

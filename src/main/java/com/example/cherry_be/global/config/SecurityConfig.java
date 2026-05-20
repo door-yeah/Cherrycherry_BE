@@ -1,5 +1,9 @@
-package com.example.cherry_be.global.config; // 패키지 경로 확인
+package com.example.cherry_be.global.config;
+
+import com.example.cherry_be.global.auth.JwtAuthenticationFilter;
+import com.example.cherry_be.global.auth.JwtUtil;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,18 +15,20 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtUtil jwtUtil;
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
-
 
     // 1. 비밀번호 암호화 도구를 스프링 빈(Bean)으로 등록
     @Bean
@@ -34,7 +40,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 // 리액트와 통신하는 REST API 서버이므로 CSRF 보호 비활성화
                 .csrf(AbstractHttpConfigurer::disable)
@@ -50,12 +55,17 @@ public class SecurityConfig {
 
                 // API 주소별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/org/login", "/api/org/signup").permitAll() // ✅ 구체적인 경로를 먼저 선언
+                        .requestMatchers("/api/org/login", "/api/org/signup").permitAll()
+                        .requestMatchers("/api/device/data").permitAll() // 라즈베리파이 인증 없이 허용
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/code/**").permitAll()
-                        .anyRequest().authenticated() // ✅ '나머지 모든 요청'은 반드시 맨 마지막에 선언
-                );
+                        .anyRequest().authenticated()
+                )
 
+                // JWT 필터를 스프링 시큐리티 필터 체인에 등록
+                // UsernamePasswordAuthenticationFilter 이전에 실행되도록 설정
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil),
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -63,25 +73,18 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-
         configuration.setAllowedOrigins(List.of(allowedOrigins.split(",")));
-
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true); // 쿠키나 인증 정보 포함 허용
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // 모든 경로("/**")에 대해 위에서 만든 규칙을 적용합니다.
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        // 파비콘이나 에러 페이지 같은 정적 리소스는 시큐리티 필터 자체를 아예 타지 않도록 '무시(ignore)' 합니다.
         return (web) -> web.ignoring().requestMatchers("/favicon.ico", "/error");
     }
-
 }
-

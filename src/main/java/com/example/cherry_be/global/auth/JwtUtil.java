@@ -28,7 +28,7 @@ public class JwtUtil {
      */
     public String createToken(String loginId, String role) {
         return Jwts.builder()
-                .claim("loginId", loginId) // 토큰에 아이디 담기
+                .claim("orgId", loginId) // 토큰에 아이디 담기
                 .claim("role", role)       // 토큰에 권한 담기 (예: ROLE_ADMIN)
                 .issuedAt(new Date(System.currentTimeMillis())) // 발급 시간
                 .expiration(new Date(System.currentTimeMillis() + expirationTime)) // 만료 시간
@@ -62,4 +62,16 @@ public class JwtUtil {
     }
 
 
+
+    /**
+     * 5. 토큰에서 권한(role)을 꺼내는 메서드
+     */
+    public String getRole(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
+    }
 }
