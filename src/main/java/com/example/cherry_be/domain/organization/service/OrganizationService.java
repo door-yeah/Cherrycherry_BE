@@ -7,8 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.concurrent.ThreadLocalRandom;
 
-import java.util.UUID;
+
 
 @Service
 @RequiredArgsConstructor // final이 붙은 필드를 자동으로 연결(주입)해 줍니다.
@@ -32,7 +33,7 @@ public class OrganizationService {
         String encodedPassword = passwordEncoder.encode(rawPassword);
 
         // 3. 기관번호 임의 부여 (예: ORG-1234abcd 형식)
-        String generatedOrganizeId = "ORG-" + UUID.randomUUID().toString().substring(0, 8);
+        Long generatedOrganizeId = ThreadLocalRandom.current().nextLong(100000L, 1000000L); // 6자리 숫자
 
         // 4. 엔티티 생성
         Organization organization = Organization.builder()

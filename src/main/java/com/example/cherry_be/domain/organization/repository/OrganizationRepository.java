@@ -10,7 +10,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     Optional<Organization> findByOrgId(String orgId);
 
     // 나중에 임의로 부여된 기관번호(organizeId)로 기관을 찾아야 할 때 쓸 수 있는 메서드 (미리 만들어둠)
-    Optional<Organization> findByOrgCode(String orgCode);
+    Optional<Organization> findByOrgCode(Long orgCode);
 
     // 기관 로그인 ID가 이미 존재하는지(중복 가입 방지) 확인할 때 사용
     boolean existsByOrgId(String orgId);

@@ -26,10 +26,10 @@ public class Organization {
     private String name;
 
     @Column(name = "org_code") // 기관번호 (임의 부여 예정이므로 nullable 허용)
-    private String orgCode;
+    private Long orgCode;
 
     @Builder
-    public Organization(String orgId, String password, String name, String orgCode) {
+    public Organization(String orgId, String password, String name, Long orgCode) {
         this.orgId = orgId;
         this.password = password;
         this.name = name;

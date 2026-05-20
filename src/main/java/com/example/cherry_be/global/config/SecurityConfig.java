@@ -56,6 +56,7 @@ public class SecurityConfig {
                 // API 주소별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/org/login", "/api/org/signup").permitAll()
+                        .requestMatchers("/api/device/data").permitAll() // 라즈베리파이 인증 없이 허용
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/code/**").permitAll()
                         .anyRequest().authenticated()
