@@ -17,28 +17,26 @@ public class EmergencyContact {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 어떤 피보호자의 비상연락망인지
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-
     @Column(nullable = false)
     private String name;
 
-    // 전화번호
-    @Column(nullable = false)
-    private String phoneNumber;
+    // 전화번호 (DB 컬럼명 유지)
+    @Column(name = "phone_number", nullable = false)
+    private String phone;
 
-    // 관계 (예: "딸", "아들", "며느리")
-    @Column(nullable = false)
-    private String relation;
+    // 관계 (DB 컬럼명 유지)
+    @Column(name = "relation", nullable = false)
+    private String relationship;
 
     @Builder
-    public EmergencyContact(Member member, String name, String phoneNumber, String relation) {
+    public EmergencyContact(Member member, String name, String phone, String relationship) {
         this.member = member;
         this.name = name;
-        this.phoneNumber = phoneNumber;
-        this.relation = relation;
+        this.phone = phone;
+        this.relationship = relationship;
     }
 }

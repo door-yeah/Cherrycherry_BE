@@ -1,5 +1,6 @@
 package com.example.cherry_be.domain.user.controller;
 
+import com.example.cherry_be.domain.member.repository.MemberRepository;
 import com.example.cherry_be.domain.user.dto.UserDto;
 import com.example.cherry_be.domain.user.helper.constants.SocialLoginType;
 import com.example.cherry_be.domain.user.service.OauthService;
@@ -25,11 +26,12 @@ public class OauthController {
     private final OauthService oauthService;
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final MemberRepository memberRepository;
 
     private static final String FRONTEND_REDIRECT_URL = "http://localhost:5173/oauth/callback";
 
     /**
-     * [GET] 구글 로그인 창으로 리다이렉트
+     * [GET] 소셜 로그인 창으로 리다이렉트
      */
     @GetMapping(value = "/{socialLoginType}")
     public void socialLoginType(
@@ -42,8 +44,10 @@ public class OauthController {
     }
 
     /**
-     * [GET] 구글 로그인 완료 후 콜백 처리
-     * → 프론트엔드로 token, isNewUser 쿼리파라미터와 함께 redirect
+     * [GET] 소셜 로그인 완료 후 콜백 처리
+     * isNewUser = 피보호자(ward) 미등록 여부
+     *   true  → 피보호자 등록 화면(/guardian/signup)
+     *   false → 홈 화면(/guardian/home)
      */
     @GetMapping(value = "/{socialLoginType}/callback")
     public void callback(
@@ -54,21 +58,25 @@ public class OauthController {
         log.info(">> 소셜 로그인 API 서버로부터 받은 code :: {}", code);
 
         String accessToken = oauthService.requestAccessToken(socialLoginType, code);
-        log.info(">> [2] 구글 Access Token 획득 성공");
+        log.info(">> [2] Access Token 획득 성공");
 
         UserDto userInfo = oauthService.getUserInfo(socialLoginType, accessToken);
-        log.info(">> [3] 구글 유저 정보 획득 성공 :: 이메일 = {}", userInfo.getOauthEmail());
+        log.info(">> [3] 유저 정보 획득 성공 :: 이메일 = {}", userInfo.getOauthEmail());
 
         LoginResult result = userService.loginOrSignup(userInfo);
-        log.info(">> [4] DB 저장/조회 완료 :: 회원 이름 = {}, 신규 여부 = {}", result.getUser().getName(), result.isNewUser());
+        log.info(">> [4] DB 저장/조회 완료 :: 회원 이름 = {}", result.getUser().getName());
+
+        // ✅ 피보호자 등록 여부로 isNewUser 판단
+        boolean hasWard = memberRepository.findByUser(result.getUser()).isPresent();
+        boolean needsWardRegistration = !hasWard;
+        log.info(">> [5] 피보호자 등록 여부 = {}, 등록 필요 = {}", hasWard, needsWardRegistration);
 
         String jwtToken = jwtUtil.createToken(result.getUser().getOauthEmail(), "ROLE_USER");
-        log.info(">> [5] JWT 토큰 발급 완료 :: {}", jwtToken);
+        log.info(">> [6] JWT 토큰 발급 완료");
 
-        // 프론트엔드로 redirect
         String redirectUrl = FRONTEND_REDIRECT_URL
                 + "?token=" + jwtToken
-                + "&isNewUser=" + result.isNewUser();
+                + "&isNewUser=" + needsWardRegistration;
 
         response.sendRedirect(redirectUrl);
     }
@@ -78,29 +86,25 @@ public class OauthController {
      */
     @PostMapping(value = "/login")
     public ResponseEntity<?> socialLoginPost(@RequestBody Map<String, String> requestBody) {
-        log.info(">> 리액트로부터 POST 로그인 요청 받음 :: 데이터 = {}", requestBody);
+        log.info(">> 리액트로부터 POST 로그인 요청 받음");
 
         String code = requestBody.get("code");
         String provider = requestBody.getOrDefault("provider", "google");
         SocialLoginType socialLoginType = SocialLoginType.valueOf(provider.toUpperCase());
 
         String accessToken = oauthService.requestAccessToken(socialLoginType, code);
-        log.info(">> [2] 구글 Access Token 획득 성공");
-
         UserDto userInfo = oauthService.getUserInfo(socialLoginType, accessToken);
-        log.info(">> [3] 구글 유저 정보 획득 성공 :: 이메일 = {}", userInfo.getOauthEmail());
-
         LoginResult result = userService.loginOrSignup(userInfo);
-        log.info(">> [4] DB 저장/조회 완료 :: 회원 이름 = {}, 신규 여부 = {}", result.getUser().getName(), result.isNewUser());
+
+        boolean hasWard = memberRepository.findByUser(result.getUser()).isPresent();
 
         String jwtToken = jwtUtil.createToken(result.getUser().getOauthEmail(), "ROLE_USER");
-        log.info(">> [5] JWT 토큰 발급 완료 :: {}", jwtToken);
 
         return ResponseEntity.ok()
                 .header("Authorization", "Bearer " + jwtToken)
                 .body(Map.of(
                         "token", jwtToken,
-                        "isNewUser", result.isNewUser(),
+                        "isNewUser", !hasWard,
                         "message", result.getUser().getName() + "님, 로그인을 환영합니다!"
                 ));
     }
