@@ -41,7 +41,7 @@ public class Member {
     private String address;
 
     // 집이나 핸드폰 번호
-    private Long contact;
+    private String contact;
 
     // 라즈베리파이 고유 ID (pi_node_01 같은 값)
     @Column(name = "device_mac", unique = true)
@@ -61,7 +61,7 @@ public class Member {
 
     @Builder
     public Member(Organization organization, User user, String name, Long age,
-                      String address, Long contact, String deviceMac) {
+                      String address, String contact, String deviceMac) {
         this.organization = organization;
         this.user = user;
         this.name = name;

@@ -1,10 +1,10 @@
 package com.example.cherry_be.domain.user.controller;
 
 import com.example.cherry_be.domain.user.dto.UserDto;
-import com.example.cherry_be.domain.user.entity.User;
 import com.example.cherry_be.domain.user.helper.constants.SocialLoginType;
 import com.example.cherry_be.domain.user.service.OauthService;
 import com.example.cherry_be.domain.user.service.UserService;
+import com.example.cherry_be.domain.user.service.UserService.LoginResult;
 import com.example.cherry_be.global.auth.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +26,10 @@ public class OauthController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
+    private static final String FRONTEND_REDIRECT_URL = "http://localhost:5173/oauth/callback";
+
     /**
-     * [GET] 구글 로그인 창으로 리다이렉트 (백엔드 직접 호출 시 사용)
+     * [GET] 구글 로그인 창으로 리다이렉트
      */
     @GetMapping(value = "/{socialLoginType}")
     public void socialLoginType(
@@ -40,11 +42,15 @@ public class OauthController {
     }
 
     /**
-     * [GET] 구글 로그인 완료 후 콜백 처리 (백엔드 직접 호출 시 사용)
+     * [GET] 구글 로그인 완료 후 콜백 처리
+     * → 프론트엔드로 token, isNewUser 쿼리파라미터와 함께 redirect
      */
     @GetMapping(value = "/{socialLoginType}/callback")
-    public ResponseEntity<?> callback(@PathVariable(name = "socialLoginType") SocialLoginType socialLoginType,
-                                      @RequestParam(name = "code") String code) {
+    public void callback(
+            @PathVariable(name = "socialLoginType") SocialLoginType socialLoginType,
+            @RequestParam(name = "code") String code,
+            HttpServletResponse response) throws IOException {
+
         log.info(">> 소셜 로그인 API 서버로부터 받은 code :: {}", code);
 
         String accessToken = oauthService.requestAccessToken(socialLoginType, code);
@@ -53,19 +59,22 @@ public class OauthController {
         UserDto userInfo = oauthService.getUserInfo(socialLoginType, accessToken);
         log.info(">> [3] 구글 유저 정보 획득 성공 :: 이메일 = {}", userInfo.getOauthEmail());
 
-        User user = userService.loginOrSignup(userInfo);
-        log.info(">> [4] DB 저장/조회 완료 :: 회원 이름 = {}", user.getName());
+        LoginResult result = userService.loginOrSignup(userInfo);
+        log.info(">> [4] DB 저장/조회 완료 :: 회원 이름 = {}, 신규 여부 = {}", result.getUser().getName(), result.isNewUser());
 
-        String jwtToken = jwtUtil.createToken(user.getOauthEmail(), "ROLE_USER");
-        log.info(">> [5] JWT 토큰 발급 완료 :: {}", jwtToken);  // ← 추가
+        String jwtToken = jwtUtil.createToken(result.getUser().getOauthEmail(), "ROLE_USER");
+        log.info(">> [5] JWT 토큰 발급 완료 :: {}", jwtToken);
 
-        return ResponseEntity.ok()
-                .header("Authorization", "Bearer " + jwtToken)
-                .body("로그인 성공! 환영합니다 " + user.getName() + "님. (JWT 토큰이 헤더에 발급되었습니다)");
+        // 프론트엔드로 redirect
+        String redirectUrl = FRONTEND_REDIRECT_URL
+                + "?token=" + jwtToken
+                + "&isNewUser=" + result.isNewUser();
+
+        response.sendRedirect(redirectUrl);
     }
 
     /**
-     * 🔥 [POST] 프론트엔드(React)에서 구글 코드를 가로채서 서버로 던질 때 사용하는 최종 API
+     * [POST] 프론트엔드에서 코드를 직접 서버로 보낼 때 사용 (JSON 응답)
      */
     @PostMapping(value = "/login")
     public ResponseEntity<?> socialLoginPost(@RequestBody Map<String, String> requestBody) {
@@ -81,17 +90,18 @@ public class OauthController {
         UserDto userInfo = oauthService.getUserInfo(socialLoginType, accessToken);
         log.info(">> [3] 구글 유저 정보 획득 성공 :: 이메일 = {}", userInfo.getOauthEmail());
 
-        User user = userService.loginOrSignup(userInfo);
-        log.info(">> [4] DB 저장/조회 완료 :: 회원 이름 = {}", user.getName());
+        LoginResult result = userService.loginOrSignup(userInfo);
+        log.info(">> [4] DB 저장/조회 완료 :: 회원 이름 = {}, 신규 여부 = {}", result.getUser().getName(), result.isNewUser());
 
-        String jwtToken = jwtUtil.createToken(user.getOauthEmail(), "ROLE_USER");
-        log.info(">> [5] JWT 토큰 발급 완료 :: {}", jwtToken);  // ← 추가
+        String jwtToken = jwtUtil.createToken(result.getUser().getOauthEmail(), "ROLE_USER");
+        log.info(">> [5] JWT 토큰 발급 완료 :: {}", jwtToken);
 
         return ResponseEntity.ok()
                 .header("Authorization", "Bearer " + jwtToken)
                 .body(Map.of(
                         "token", jwtToken,
-                        "message", user.getName() + "님, 로그인을 환영합니다!"
+                        "isNewUser", result.isNewUser(),
+                        "message", result.getUser().getName() + "님, 로그인을 환영합니다!"
                 ));
     }
 }

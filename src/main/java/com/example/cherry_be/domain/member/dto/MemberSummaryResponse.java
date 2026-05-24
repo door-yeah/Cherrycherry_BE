@@ -41,7 +41,7 @@ public class MemberSummaryResponse {
         private final String name;
         private final Long age;
         private final String address;
-        private final Long contact;
+        private final String contact;
         private final MemberStatus status;
         private final Boolean vibrator;
         private final Boolean radar;
