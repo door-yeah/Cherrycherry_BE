@@ -63,4 +63,17 @@ public class MemberController {
         String orgId = authentication.getName();
         return ResponseEntity.ok(memberService.getTargetDetail(orgId, targetId));
     }
+
+    /**
+     * 피보호자 삭제
+     * [DELETE] /api/targets/{targetId}
+     */
+    @DeleteMapping("/{targetId}")
+    public ResponseEntity<String> deleteMember(
+            Authentication authentication,
+            @PathVariable Long targetId) {
+        String orgId = authentication.getName();
+        memberService.deleteMember(orgId, targetId);
+        return ResponseEntity.ok("피보호자 삭제 완료");
+    }
 }

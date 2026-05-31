@@ -1,8 +1,11 @@
 package com.example.cherry_be.domain.member.entity;
 
+import com.example.cherry_be.domain.log.entity.Log;
 import com.example.cherry_be.domain.organization.entity.Organization;
 import com.example.cherry_be.domain.user.entity.User;
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -56,6 +59,9 @@ public class Member {
     private Boolean radar;        // 레이더 센서 정상 여부
     private Boolean thermal;      // 열화상 센서 정상 여부
 
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Log> fallLogs = new ArrayList<>();
+
     @Column(name = "last_updated")
     private LocalDateTime lastUpdated; // 마지막 Pi 데이터 수신 시각
 
@@ -73,6 +79,7 @@ public class Member {
         this.vibrator = true;
         this.radar = true;
         this.thermal = true;
+        this.lastUpdated = LocalDateTime.now(); // 등록 시점으로 초기화
     }
 
     // 라즈베리파이 데이터 수신 시 상태 업데이트
