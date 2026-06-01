@@ -88,4 +88,22 @@ public class MemberService {
 
         return new MemberDetailResponse(member);
     }
+
+    /**
+     * 피보호자 삭제
+     * [DELETE] /api/targets/{targetId}
+     */
+    @Transactional
+    public void deleteMember(String orgId, Long targetId) {
+        Organization organization = findOrganization(orgId);
+        Member member = memberRepository.findById(targetId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 피보호자입니다."));
+
+        // 해당 기관 소속인지 검증
+        if (!member.getOrganization().getId().equals(organization.getId())) {
+            throw new IllegalArgumentException("해당 기관의 피보호자가 아닙니다.");
+        }
+
+        memberRepository.delete(member);
+    }
 }
