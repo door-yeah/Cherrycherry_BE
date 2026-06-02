@@ -58,7 +58,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/org/login", "/api/org/signup").permitAll()
                         .requestMatchers("/api/device/data").permitAll() // 라즈베리파이 인증 없이 허용
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/oauth2/**", "/login/oauth2/code/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/code/**","/api/wards/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
@@ -78,6 +78,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Authorization")); // 프론트가 응답 헤더의 JWT 읽을 수 있도록
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

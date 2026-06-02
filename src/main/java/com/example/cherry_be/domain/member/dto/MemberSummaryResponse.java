@@ -30,7 +30,7 @@ public class MemberSummaryResponse {
             this.total   = members.size();
             this.safe    = (int) members.stream().filter(m -> m.getStatus() == MemberStatus.SAFE).count();
             this.warning = (int) members.stream().filter(m -> m.getStatus() == MemberStatus.WARNING).count();
-            this.danger  = (int) members.stream().filter(m -> m.getStatus() == MemberStatus.EMERGENCY).count();
+            this.danger  = (int) members.stream().filter(m -> m.getStatus() == MemberStatus.DANGER).count();
         }
     }
 
